@@ -1,0 +1,37 @@
+Starting project at C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+The following packages should be updated for best compatibility with the installed expo version:
+  @react-native-async-storage/async-storage@2.2.0 - expected version: 2.1.2
+  expo-auth-session@5.5.2 - expected version: ~6.2.1
+  expo-font@13.0.4 - expected version: ~13.3.2
+  expo-notifications@0.29.14 - expected version: ~0.31.5
+  expo-web-browser@14.1.6 - expected version: ~14.2.0
+  react-native@0.79.5 - expected version: 0.79.6
+  @types/react@19.2.14 - expected version: ~19.0.10
+  jest@30.2.0 - expected version: ~29.7.0
+  typescript@5.9.3 - expected version: ~5.8.3
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\build\src\utils\errors.js:130
+    throw error;
+    ^
+
+Error: ENOENT: no such file or directory, watch 'C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\.react-native-4JmdgJiE\ReactAndroid\src\main\java\com\facebook\react\common\annotations\internal'
+    at FSWatcher.<computed> (node:internal/fs/watchers:254:19)
+    at Object.watch (node:fs:2536:36)
+    at FallbackWatcher._watchdir (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:88:24)
+    at C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:185:22
+    at Walker.<anonymous> (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:322:31)
+    at Walker.emit (node:events:508:28)
+    at C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\walker\lib\walker.js:69:16
+    at FSReqCallback.oncomplete (node:fs:184:23) {
+  errno: -4058,
+  syscall: 'watch',
+  code: 'ENOENT',
+  path: 'C:\\Users\\ACER\\OneDrive\\Escritorio\\AplicativoMovilAcuaponicoversion2\\node_modules\\.react-native-4JmdgJiE\\ReactAndroid\\src\\main\\java\\com\\facebook\\react\\common\\annotations\\internal',
+  filename: 'C:\\Users\\ACER\\OneDrive\\Escritorio\\AplicativoMovilAcuaponicoversion2\\node_modules\\.react-native-4JmdgJiE\\ReactAndroid\\src\\main\\java\\com\\facebook\\react\\common\\annotations\\internal'
+}
+
+Node.js v24.13.1

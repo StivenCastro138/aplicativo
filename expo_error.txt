@@ -1,0 +1,13 @@
+Starting project at C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2
+PluginError: Failed to resolve plugin for module "expo-web-browser" relative to "C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2". Do you have node modules installed?
+PluginError: Failed to resolve plugin for module "expo-web-browser" relative to "C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2". Do you have node modules installed?
+    at resolvePluginForModule (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\node_modules\@expo\config-plugins\build\utils\plugin-resolver.js:96:9)
+    at resolveConfigPluginFunctionWithInfo (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\node_modules\@expo\config-plugins\build\utils\plugin-resolver.js:145:7)
+    at resolveConfigPluginFunction (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\node_modules\@expo\config-plugins\build\utils\plugin-resolver.js:136:7)
+    at withStaticPlugin (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\node_modules\@expo\config-plugins\build\plugins\withStaticPlugin.js:85:70)
+    at C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\node_modules\@expo\config-plugins\build\plugins\withPlugins.js:30:84
+    at Array.reduce (<anonymous>)
+    at withPlugins (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\node_modules\@expo\config-plugins\build\plugins\withPlugins.js:30:18)
+    at withConfigPlugins (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\node_modules\@expo\config\build\plugins\withConfigPlugins.js:35:47)
+    at fillAndReturnConfig (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\node_modules\@expo\config\build\Config.js:236:78)
+    at getConfig (C:\Users\ACER\OneDrive\Escritorio\AplicativoMovilAcuaponicoversion2\node_modules\@expo\cli\node_modules\@expo\config\build\Config.js:293:10)

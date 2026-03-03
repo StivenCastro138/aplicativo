@@ -343,10 +343,11 @@ function CustomDrawerContent(props: any) {
 export default function MainDrawer() {
   return (
     <Drawer.Navigator
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      drawerContent={CustomDrawerContent} // <--- ¡ESTE ES EL CAMBIO MÁGICO!
       screenOptions={{
         headerShown: false,
         drawerPosition: "right",
+        swipeEnabled: false,
       }}
     >
       <Drawer.Screen name="Dashboard" component={MainTabNavigator} />

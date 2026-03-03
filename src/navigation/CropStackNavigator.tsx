@@ -1,6 +1,4 @@
 import React, { useContext } from "react";
-import { createStackNavigator } from "@react-navigation/stack";
-import { useAuth } from "../context/authContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { LanguageContext } from "../context/LanguageContext";
 import UserHeader from "../components/UserHeader";
@@ -8,8 +6,9 @@ import UserHeader from "../components/UserHeader";
 import CultivosScreen from "../screens/CropScreen";
 import PrediccionesScreen from "../screens/PredictCropScreen";
 import PredictCropMLScreen from "../screens/PredictCropMLScreen";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 
 export default function CultivosStackNavigator() {
   const theme = useContext(ThemeContext);
@@ -32,7 +31,7 @@ export default function CultivosStackNavigator() {
             />
           );
         },
-        cardStyle: { backgroundColor: isDark ? "#121212" : "#F0FDF4" },
+        contentStyle: { backgroundColor: isDark ? "#121212" : "#F0FDF4" },
       })}
     >
       <Stack.Screen name="CultivosMain" component={CultivosScreen} />

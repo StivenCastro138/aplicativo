@@ -1,5 +1,4 @@
 import React, { useContext } from "react";
-import { createStackNavigator } from "@react-navigation/stack";
 import { ThemeContext } from "../context/ThemeContext";
 import { LanguageContext } from "../context/LanguageContext";
 import UserHeader from "../components/UserHeader";
@@ -7,8 +6,9 @@ import UserHeader from "../components/UserHeader";
 import TanquesScreen from "../screens/TankScreen";
 import PrediccionesTanquesScreen from "../screens/PredictTankScreen";
 import PrediccionMLTanquesScreen from "../screens/PredictTankMLScreen";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 
 export default function TanquesStackNavigator() {
   const themeContext = useContext(ThemeContext);
@@ -18,7 +18,7 @@ export default function TanquesStackNavigator() {
 
   return (
     <Stack.Navigator
-      screenOptions={({ navigation, route }) => ({
+      screenOptions={({ navigation, route}) => ({
         headerShown: true,
 
         header: () => {
@@ -31,7 +31,7 @@ export default function TanquesStackNavigator() {
             />
           );
         },
-        cardStyle: { backgroundColor: isDark ? "#121212" : "#F0FDF4" },
+        contentStyle: { backgroundColor: isDark ? "#121212" : "#F0FDF4" },
       })}
     >
       <Stack.Screen name="TanquesMain" component={TanquesScreen} />

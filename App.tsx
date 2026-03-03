@@ -1,11 +1,15 @@
+import "react-native-gesture-handler";
 import "./src/styles/globals.css"
 import { NavigationContainer } from "@react-navigation/native"
-import { createStackNavigator } from "@react-navigation/stack"
 import { StatusBar } from "expo-status-bar"
-import { useRef, useEffect } from "react"
-import { Platform, LogBox, View } from "react-native" 
-import Constants from 'expo-constants';
-
+import { useRef,  } from "react"
+import { View } from "react-native" 
+import { LogBox } from "react-native";
+LogBox.ignoreLogs(["setLayoutAnimationEnabledExperimental"]);
+LogBox.ignoreLogs([
+  "setLayoutAnimationEnabledExperimental",
+  "SafeAreaView has been deprecated"
+]);
 import { AuthProvider, useAuth } from "./src/context/authContext"
 import { AlertProvider, useAlert } from "./src/context/AlertContext"
 import LoginScreen from "./src/screens/LoginScreen"
@@ -17,8 +21,8 @@ import { ThemeProvider } from "./src/context/ThemeContext";
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import { LanguageProvider } from "./src/context/LanguageContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-
-const Stack = createStackNavigator()
+import { createNativeStackNavigator } from "@react-navigation/native-stack"
+const Stack = createNativeStackNavigator()
 
 function AppContent() {
   const { user } = useAuth()
@@ -43,8 +47,8 @@ function AppContent() {
   return (
     <View style={{ flex: 1 }}>
       <NavigationContainer ref={navigationRef}>
-        <StatusBar style="dark" backgroundColor="#F0FDF4" />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <StatusBar style="dark"/>
+        <Stack.Navigator screenOptions={{ headerShown: false, gestureEnabled: false }}>
           {user ? (
             <Stack.Screen name="MainDrawer" component={MainDrawer} />
           ) : (

@@ -14,12 +14,6 @@ import { useNavigation } from "@react-navigation/native";
 import { ThemeContext } from "../context/ThemeContext";
 import { LanguageContext } from "../context/LanguageContext";
 
-if (Platform.OS === "android") {
-  if (UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-  }
-}
-
 export default function AyudaScreen() {
   const navigation = useNavigation();
   const [openIndex, setOpenIndex] = useState<number | null>(null);

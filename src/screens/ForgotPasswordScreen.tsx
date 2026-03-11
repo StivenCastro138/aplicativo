@@ -15,6 +15,7 @@ import {
   StatusBar,
   useWindowDimensions,
   ScrollView,
+  Linking,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -369,7 +370,7 @@ export default function ForgotPasswordScreen({
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.webLink}>{t("webSitio")}</Text>
+            <Text style={styles.webLink} onPress={() => Linking.openURL("https://www.ucundinamarca.edu.co")}>{t("webSitio")}</Text>
             <Text style={styles.vigilada}>{t("vigiladaMinEducacion")}</Text>
           </View>
         </ScrollView>

@@ -80,7 +80,7 @@ export default function UserHeader({ onBack }: UserHeaderProps) {
             onPress={openMenu}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="account-circle" size={34} color="white" />
+            <MaterialIcons name="reorder" size={30} color="white" />
           </TouchableOpacity>
         </View>
       </View>

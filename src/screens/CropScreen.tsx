@@ -89,9 +89,9 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
     
     if (timeDiff >= 1500000 || !lastUpdate) {
       setHistory((prev) => ({
-        temperatura: [...prev.temperatura.slice(-9), newData.temperatura],
-        humedad: [...prev.humedad.slice(-9), newData.humedad],
-        ph: [...prev.ph.slice(-9), newData.ph],
+        temperatura: [...prev.temperatura.slice(-49), newData.temperatura],
+        humedad: [...prev.humedad.slice(-49), newData.humedad],
+        ph: [...prev.ph.slice(-49), newData.ph],
       }))
     }
 
@@ -240,7 +240,7 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
               </View>
             )}
           </View>
-
+          
           <View style={[styles.metricCard, { backgroundColor: isDark ? '#1E3A8A' : '#EFF6FF', borderLeftColor: '#3B82F6' }]}>
             <View style={styles.metricHeader}>
               <MaterialIcons name="water-drop" size={20} color={isDark ? "#93C5FD" : "#3B82F6"} />
@@ -261,6 +261,7 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
           </View>
         </View>
 
+        {/*
         <View style={[styles.fullMetricCard, { backgroundColor: isDark ? '#2E1065' : '#FAF5FF', borderLeftColor: '#A855F7' }]}>
           <View style={styles.metricHeader}>
             <MaterialIcons name="science" size={20} color={isDark ? "#D8B4FE" : "#A855F7"} />
@@ -278,6 +279,7 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
             </View>
           )}
         </View>
+        */}
 
         {history.temperatura.length > 0 && (
           <View style={styles.chartContainer}>
@@ -298,7 +300,7 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
               </View>
               <LineChart
                 data={{
-                  labels: history.temperatura.length === 1 ? ["1", "2"] : history.temperatura.map((_, i) => `${i + 1}`),
+                  labels: history.temperatura.length === 1 ? ["1", "2"] : history.temperatura.map((_, i) => i % 5 === 0 ? `${i + 1}` : ""),
                   datasets: [{ 
                     data: history.temperatura.length === 1 ? [history.temperatura[0], history.temperatura[0]] : history.temperatura 
                   }],
@@ -318,7 +320,7 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
                 segments={4}
               />
             </View>
-            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_10_MEDICIONES")}</Text>
+            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_50_MEDICIONES")}</Text>
           </View>
         )}
 
@@ -341,7 +343,7 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
               </View>
               <LineChart
                 data={{
-                  labels: history.humedad.length === 1 ? ["1", "2"] : history.humedad.map((_, i) => `${i + 1}`),
+                  labels: history.humedad.length === 1 ? ["1", "2"] : history.humedad.map((_, i) => i % 5 === 0 ? `${i + 1}` : ""),
                   datasets: [{ 
                     data: history.humedad.length === 1 ? [history.humedad[0], history.humedad[0]] : history.humedad 
                   }],
@@ -361,10 +363,11 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
                 segments={4}
               />
             </View>
-            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_10_MEDICIONES")}</Text>
+            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_50_MEDICIONES")}</Text>
           </View>
         )}
 
+        {/* 
         {history.ph.length > 0 && (
           <View style={styles.chartContainer}>
             <View style={styles.chartHeaderRow}>
@@ -384,7 +387,7 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
               </View>
               <LineChart
                 data={{
-                  labels: history.ph.length === 1 ? ["1", "2"] : history.ph.map((_, i) => `${i + 1}`),
+                  labels: history.ph.length === 1 ? ["1", "2"] : history.ph.map((_, i) => i % 5 === 0 ? `${i + 1}` : ""),
                   datasets: [{ 
                     data: history.ph.length === 1 ? [history.ph[0], history.ph[0]] : history.ph 
                   }],
@@ -404,9 +407,10 @@ export default function CultivosScreen({ navigation }: CultivosScreenProps = {})
                 segments={4}
               />
             </View>
-            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_10_MEDICIONES")}</Text>
+            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_50_MEDICIONES")}</Text>
           </View>
         )}
+          */}
 
         {!hasModelAccess && (isGmailUser || !isUcundinamarcaUser) && (
           <View style={styles.restrictedContainer}>

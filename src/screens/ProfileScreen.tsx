@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   useWindowDimensions,
+  Linking,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "../context/authContext";
@@ -33,6 +34,7 @@ export default function PerfilScreen() {
   const nombreCompleto = `${userData?.nombre || "Usuario"} ${userData?.apellido || ""}`.trim();
   const safeName = encodeURIComponent(nombreCompleto);
   const avatarUrl = `https://ui-avatars.com/api/?name=${safeName}&background=007b3e&color=fff&size=512&bold=true`;
+  const esInstitucional = userData?.correo?.endsWith("@ucundinamarca.edu.co");
 
   const themeContext = useContext(ThemeContext);
   const isDark = themeContext?.isDark ?? false;
@@ -97,18 +99,14 @@ export default function PerfilScreen() {
           <InfoItem
             icon="admin-panel-settings"
             label={t("rolAcceso")}
-            value={
-              userData?.rol === "institucional"
-                ? t("administrador")
-                : t("invitado")
-            }
+            value={esInstitucional ? t("administrador") : t("invitado")}
             isRole
           />
         </View>
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.webLink}>{t("webSitio")}</Text>
+        <Text style={styles.webLink} onPress={() => Linking.openURL("https://www.ucundinamarca.edu.co")}>{t("webSitio")}</Text>
         <Text style={styles.vigilada}>{t("vigiladaMinEducacion")}</Text>
       </View>
     </ScrollView>

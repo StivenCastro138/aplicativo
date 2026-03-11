@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Alerta } from "../context/AlertContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { LanguageContext } from "../context/LanguageContext";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
 interface AlertOverlayProps {
   alerta: Alerta;
@@ -56,24 +55,6 @@ export default function AlertOverlay({
   const handleVerAlerta = () => closeAnimation(onVerAlertaRef.current);
   const handleIgnorar = () => closeAnimation(onIgnorarRef.current);
 
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      if (event.translationY < 0) {
-        pan.y.setValue(event.translationY);
-      }
-    })
-    .onEnd((event) => {
-      if (event.translationY < -60) {
-        handleIgnorar();
-      } else {
-        Animated.spring(pan, {
-          toValue: { x: 0, y: 0 },
-          useNativeDriver: true,
-          friction: 5,
-        }).start();
-      }
-    });
-
   useEffect(() => {
     Animated.parallel([
       Animated.spring(pan.y, {
@@ -106,97 +87,96 @@ export default function AlertOverlay({
       style={[styles.overlay, { paddingTop: insets.top + 10 }]}
       pointerEvents="box-none"
     >
-      <GestureDetector gesture={panGesture}>
-        <Animated.View
-          style={[
-            styles.alertContainer,
-            {
-              transform: [{ translateY: pan.y }],
-              opacity: opacityAnim,
-              borderLeftColor: getSeverityColor(alerta.severidad),
-            },
-          ]}
-        >
-          <View style={styles.dragBar} />
+      <Animated.View
+        style={[
+          styles.alertContainer,
+          {
+            transform: [{ translateY: pan.y }],
+            opacity: opacityAnim,
+            borderLeftColor: getSeverityColor(alerta.severidad),
+          },
+        ]}
+      >
+        <View style={styles.dragBar} />
 
-          <View style={styles.alertHeader}>
-            <View style={styles.headerInfo}>
-              <MaterialIcons
-                name={alerta.severidad === "critica" ? "report" : "warning"}
-                size={20}
-                color={getSeverityColor(alerta.severidad)}
-              />
-              <Text
-                style={[
-                  styles.severityText,
-                  { color: getSeverityColor(alerta.severidad) },
-                ]}
-              >
-                {alerta.severidad.toUpperCase()}
-              </Text>
-            </View>
-            <Text style={styles.timestampText}>
-              {new Date(alerta.timestamp).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+        <View style={styles.alertHeader}>
+          <View style={styles.headerInfo}>
+            <MaterialIcons
+              name={alerta.severidad === "critica" ? "report" : "warning"}
+              size={20}
+              color={getSeverityColor(alerta.severidad)}
+            />
+            <Text
+              style={[
+                styles.severityText,
+                { color: getSeverityColor(alerta.severidad) },
+              ]}
+            >
+              {alerta.severidad.toUpperCase()}
+            </Text>
+          </View>
+          <Text style={styles.timestampText}>
+            {new Date(alerta.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
+        </View>
+
+        <View style={styles.contentRow}>
+          <View
+            style={[
+              styles.moduleBadge,
+              {
+                backgroundColor: isDark
+                  ? "#333"
+                  : alerta.modulo === "tanques"
+                  ? "#E0F2FE"
+                  : "#DCFCE7",
+              },
+            ]}
+          >
+            {alerta.modulo === "tanques" ? (
+              <FontAwesome5 name="fish" size={10} color="#0369A1" />
+            ) : (
+              <MaterialIcons name="eco" size={12} color="#15803D" />
+            )}
+            <Text
+              style={[
+                styles.moduleText,
+                { color: alerta.modulo === "tanques" ? "#0369A1" : "#15803D" },
+              ]}
+            >
+              {alerta.modulo === "tanques" ? t("tanques") : t("cultivos")}
             </Text>
           </View>
 
-          <View style={styles.contentRow}>
-            <View
-              style={[
-                styles.moduleBadge,
-                {
-                  backgroundColor: isDark
-                    ? "#333"
-                    : alerta.modulo === "tanques"
-                    ? "#E0F2FE"
-                    : "#DCFCE7",
-                },
-              ]}
-            >
-              {alerta.modulo === "tanques" ? (
-                <FontAwesome5 name="fish" size={10} color="#0369A1" />
-              ) : (
-                <MaterialIcons name="eco" size={12} color="#15803D" />
-              )}
-              <Text
-                style={[
-                  styles.moduleText,
-                  { color: alerta.modulo === "tanques" ? "#0369A1" : "#15803D" },
-                ]}
-              >
-                {alerta.modulo === "tanques" ? t("tanques") : t("cultivos")}
-              </Text>
-            </View>
-            <Text style={styles.alertMessage} numberOfLines={2}>
-              {alerta.mensaje}
-            </Text>
-          </View>
+          <Text style={styles.alertMessage} numberOfLines={2}>
+            {alerta.mensaje}
+          </Text>
+        </View>
 
-          <View style={styles.alertActions}>
-            <TouchableOpacity
-              style={styles.ignoreButton}
-              onPress={handleIgnorar}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.ignoreButtonText}>{t("ignorar")}</Text>
-            </TouchableOpacity>
+        <View style={styles.alertActions}>
+          <TouchableOpacity
+            style={styles.ignoreButton}
+            onPress={handleIgnorar}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.ignoreButtonText}>{t("ignorar")}</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.viewButton,
-                { backgroundColor: getSeverityColor(alerta.severidad) },
-              ]}
-              onPress={handleVerAlerta}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.viewButtonText}>{t("gestionarAlerta")}</Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      </GestureDetector>
+          <TouchableOpacity
+            style={[
+              styles.viewButton,
+              { backgroundColor: getSeverityColor(alerta.severidad) },
+            ]}
+            onPress={handleVerAlerta}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.viewButtonText}>{t("gestionarAlerta")}</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
     </View>
   );
 }

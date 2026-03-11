@@ -10,6 +10,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Image,
+  Linking
 } from "react-native";
 import React, { useState, useEffect, useContext } from "react";
 import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
@@ -216,7 +217,7 @@ export default function HomeScreen({ navigation }: { navigation?: any }) {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.webLink}>{t("webSitio")}</Text>
+        <Text style={styles.webLink} onPress={() => Linking.openURL("https://www.ucundinamarca.edu.co")}>{t("webSitio")}</Text>
         <Text style={styles.vigilada}>{t("vigiladaMinEducacion")}</Text>
       </View>
     </ScrollView>

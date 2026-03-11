@@ -99,11 +99,11 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
 
       if (timeDiff >= 1500000 || !lastUpdate) {
         setHistory((prev) => ({
-          temperatura:   [...prev.temperatura.slice(-9),   newData.temperatura],
-          conductividad: [...prev.conductividad.slice(-9), newData.conductividad],
-          ph:            [...prev.ph.slice(-9),            newData.ph],
-          oxigeno:       [...prev.oxigeno.slice(-9),       newData.oxigeno],
-          turbidez:      [...prev.turbidez.slice(-9),      newData.turbidez],
+          temperatura:   [...prev.temperatura.slice(-49),   newData.temperatura],
+          conductividad: [...prev.conductividad.slice(-49), newData.conductividad],
+          ph:            [...prev.ph.slice(-49),            newData.ph],
+          oxigeno:       [...prev.oxigeno.slice(-49),       newData.oxigeno],
+          turbidez:      [...prev.turbidez.slice(-49),      newData.turbidez],
         }))
       }
       setLastUpdate(now)
@@ -383,7 +383,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
               </View>
               <LineChart
                 data={{
-                  labels: history.temperatura.length === 1 ? ["1", "2"] : history.temperatura.map((_, i) => `${i + 1}`),
+                  labels: history.temperatura.length === 1 ? ["1", "2"] : history.temperatura.map((_, i) => i % 5 === 0 ? `${i + 1}` : ""),
                   datasets: [{ 
                     data: history.temperatura.length === 1 ? [history.temperatura[0], history.temperatura[0]] : history.temperatura 
                   }],
@@ -403,7 +403,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
                 segments={4}
               />
             </View>
-            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_10_MEDICIONES")}</Text>
+            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_50_MEDICIONES")}</Text>
           </View>
         )}
 
@@ -427,7 +427,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
               </View>
               <LineChart
                 data={{
-                  labels: history.conductividad.length === 1 ? ["1", "2"] : history.conductividad.map((_, i) => `${i + 1}`),
+                  labels: history.conductividad.length === 1 ? ["1", "2"] : history.conductividad.map((_, i) => i % 5 === 0 ? `${i + 1}` : ""),
                   datasets: [{ 
                     data: history.conductividad.length === 1 ? [history.conductividad[0], history.conductividad[0]] : history.conductividad 
                   }],
@@ -447,7 +447,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
                 segments={4}
               />
             </View>
-            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_10_MEDICIONES")}</Text>
+            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_50_MEDICIONES")}</Text>
           </View>
         )}
 
@@ -471,7 +471,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
               </View>
               <LineChart
                 data={{
-                  labels: history.ph.length === 1 ? ["1", "2"] : history.ph.map((_, i) => `${i + 1}`),
+                  labels: history.ph.length === 1 ? ["1", "2"] : history.ph.map((_, i) => i % 5 === 0 ? `${i + 1}` : ""),
                   datasets: [{ 
                     data: history.ph.length === 1 ? [history.ph[0], history.ph[0]] : history.ph 
                   }],
@@ -491,7 +491,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
                 segments={4}
               />
             </View>
-            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_10_MEDICIONES")}</Text>
+            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_50_MEDICIONES")}</Text>
           </View>
         )}
 
@@ -515,7 +515,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
               </View>
               <LineChart
                 data={{
-                  labels: history.oxigeno.length === 1 ? ["1", "2"] : history.oxigeno.map((_, i) => `${i + 1}`),
+                  labels: history.oxigeno.length === 1 ? ["1", "2"] : history.oxigeno.map((_, i) => i % 5 === 0 ? `${i + 1}` : ""),
                   datasets: [{ 
                     data: history.oxigeno.length === 1 ? [history.oxigeno[0], history.oxigeno[0]] : history.oxigeno 
                   }],
@@ -545,7 +545,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
                 segments={4}
               />
             </View>
-            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_10_MEDICIONES")}</Text>
+            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_50_MEDICIONES")}</Text>
           </View>
         )}
 
@@ -569,7 +569,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
               </View>
               <LineChart
                 data={{
-                  labels: history.turbidez.length === 1 ? ["1", "2"] : history.turbidez.map((_, i) => `${i + 1}`),
+                  labels: history.turbidez.length === 1 ? ["1", "2"] : history.turbidez.map((_, i) => i % 5 === 0 ? `${i + 1}` : ""),
                   datasets: [{ 
                     data: history.turbidez.length === 1 ? [history.turbidez[0], history.turbidez[0]] : history.turbidez 
                   }],
@@ -599,7 +599,7 @@ export default function TanquesScreen({ navigation }: TanquesScreenProps = {}) {
                 segments={4}
               />
             </View>
-            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_10_MEDICIONES")}</Text>
+            <Text style={styles.xAxisLabel}>{t("TIEMPO_ULTIMAS_50_MEDICIONES")}</Text>
           </View>
         )}
 

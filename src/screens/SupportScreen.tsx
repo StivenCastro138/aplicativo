@@ -108,7 +108,7 @@ export default function SoporteScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.webLink}>{t("webSitio")}</Text>
+          <Text style={styles.webLink} onPress={() => Linking.openURL("https://www.ucundinamarca.edu.co")}>{t("webSitio")}</Text>
           <Text style={styles.vigilada}>{t("vigiladaMinEducacion")}</Text>
         </View>
       </ScrollView>

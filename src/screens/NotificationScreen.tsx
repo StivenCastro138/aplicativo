@@ -8,6 +8,7 @@ import {
   Switch,
   Alert,
   Platform,
+  Linking,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -144,7 +145,7 @@ export default function NotificacionesScreen() {
       </View>
 
       <View style={styles.footer}>
-        <Text style={[styles.webLink, isDark && { color: "#34D399" }]}>www.ucundinamarca.edu.co</Text>
+        <Text style={[styles.webLink, isDark && { color: "#34D399" }]} onPress={() => Linking.openURL("https://www.ucundinamarca.edu.co")}>{t("webSitio")}</Text>
         <Text style={styles.vigilada}>{t("vigiladaMinEducacion")}</Text>
       </View>
     </ScrollView>

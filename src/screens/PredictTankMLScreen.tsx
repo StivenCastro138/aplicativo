@@ -24,6 +24,64 @@ import { useNavigation } from "@react-navigation/native"
 const screenWidth = Dimensions.get("window").width
 
 const CICLO_VIDA_MAXIMO_DIAS = 250 
+const MAX_ETIQUETAS_EJE_X = 6
+const MAX_PUNTOS_GRAFICO = 24
+const ANCHO_GRAFICO_FIJO = screenWidth - 130
+
+const resumirSerie = (serie: number[]) => {
+  if (serie.length <= MAX_PUNTOS_GRAFICO) {
+    return {
+      datos: serie,
+      dias: serie.map((_, i) => i),
+    }
+  }
+
+  const totalSaltos = serie.length - 1
+  const indices = new Set<number>([0, serie.length - 1])
+
+  for (let i = 1; i < MAX_PUNTOS_GRAFICO - 1; i++) {
+    const idx = Math.round((i * totalSaltos) / (MAX_PUNTOS_GRAFICO - 1))
+    indices.add(idx)
+  }
+
+  const indicesOrdenados = Array.from(indices).sort((a, b) => a - b)
+  return {
+    datos: indicesOrdenados.map((i) => serie[i]),
+    dias: indicesOrdenados,
+  }
+}
+
+const construirEtiquetasEjeX = (dias: number[]): string[] => {
+  if (dias.length <= 0) return []
+  if (dias.length === 1) return ["Hoy"]
+
+  if (dias.length <= MAX_ETIQUETAS_EJE_X) {
+    return dias.map((dia, i) => (i === 0 ? "Hoy" : `+${dia}`))
+  }
+
+  const paso = Math.ceil((dias.length - 1) / (MAX_ETIQUETAS_EJE_X - 1))
+  return dias.map((dia, i) => {
+    if (i === 0) return "Hoy"
+    if (i === dias.length - 1) return `+${dia}`
+    return i % paso === 0 ? `+${dia}` : ""
+  })
+}
+
+const construirSerieGrafico = (serie: number[]) => {
+  if (serie.length === 1) {
+    return {
+      datos: [serie[0], serie[0]],
+      etiquetas: ["Hoy", "+1"],
+    }
+  }
+
+  const serieResumida = resumirSerie(serie)
+
+  return {
+    datos: serieResumida.datos,
+    etiquetas: construirEtiquetasEjeX(serieResumida.dias),
+  }
+}
 
 interface DatosActualesML {
   fechaActual: string
@@ -88,6 +146,14 @@ export default function PredictTankMLScreen({ navigation }: PrediccionMLScreenPr
   const limiteDiasPrediccion = datosActuales 
     ? Math.max(0, CICLO_VIDA_MAXIMO_DIAS - datosActuales.edadEstimadaDias) 
     : 100
+
+  const datosGraficoLongitud = resultado?.curvaCrecimientoLongitud?.length
+    ? construirSerieGrafico(resultado.curvaCrecimientoLongitud)
+    : null
+
+  const datosGraficoPeso = resultado?.curvaCrecimientoPeso?.length
+    ? construirSerieGrafico(resultado.curvaCrecimientoPeso)
+    : null
 
   const realizarPrediccion = async () => {
     Keyboard.dismiss()
@@ -256,62 +322,116 @@ export default function PredictTankMLScreen({ navigation }: PrediccionMLScreenPr
               </View>
             </View>
 
-            {resultado.curvaCrecimientoLongitud?.length > 0 && (
+            {datosGraficoLongitud && (
               <View style={styles.chartContainer}>
-                <Text style={styles.chartTitle}>{t("curvaProyectadaLongitud")}</Text>
-                <LineChart
-                  data={{
-                    labels: resultado.curvaCrecimientoLongitud.length === 1 ? ["Hoy", "Futuro"] : resultado.curvaCrecimientoLongitud.map((_, i) => i === 0 ? "Hoy" : `+${i}`),
-                    datasets: [{ 
-                      data: resultado.curvaCrecimientoLongitud.length === 1 
-                        ? [resultado.curvaCrecimientoLongitud[0], resultado.curvaCrecimientoLongitud[0]] 
-                        : resultado.curvaCrecimientoLongitud 
-                    }],
-                  }}
-                  width={screenWidth - 80}
-                  height={220}
-                  chartConfig={{
-                    backgroundColor: isDark ? "#1E1E1E" : "#4F46E5",
-                    backgroundGradientFrom: isDark ? "#1E293B" : "#6366F1",
-                    backgroundGradientTo: isDark ? "#0F172A" : "#4F46E5",
-                    decimalPlaces: 1,
-                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    style: { borderRadius: 16 },
-                  }}
-                  bezier
-                  style={styles.chart}
-                />
+                <View style={styles.chartHeaderRow}>
+                  <View style={styles.chartHeaderLeft}>
+                    <Text style={styles.chartTitle}>{t("curvaProyectadaLongitud")}</Text>
+                    <Text style={styles.chartRange}>+{resultado.diasPrediccion} {t("dias") || "días"}</Text>
+                  </View>
+                  <View style={styles.chartCurrentValue}>
+                    <Text style={styles.currentValueText}>{resultado.longitudFinal.toFixed(2)} cm</Text>
+                  </View>
+                </View>
+
+                <View style={styles.chartWrapper}>
+                  <View style={styles.yAxisLabel}>
+                    <Text style={styles.yAxisText}>cm</Text>
+                  </View>
+
+                  <LineChart
+                    data={{
+                      labels: datosGraficoLongitud.etiquetas,
+                      datasets: [{ data: datosGraficoLongitud.datos }],
+                    }}
+                    width={ANCHO_GRAFICO_FIJO}
+                    height={220}
+                    chartConfig={{
+                      backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+                      backgroundGradientFrom: isDark ? "#1E293B" : "#FFFFFF",
+                      backgroundGradientTo: isDark ? "#1E293B" : "#FFFFFF",
+                      decimalPlaces: 1,
+                      color: (opacity = 1) => `rgba(79, 70, 229, ${opacity})`,
+                      labelColor: (opacity = 1) =>
+                        isDark ? `rgba(148, 163, 184, ${opacity})` : `rgba(100, 116, 139, ${opacity})`,
+                      propsForDots: { r: "4", strokeWidth: "2", stroke: "#4F46E5" },
+                      propsForBackgroundLines: { stroke: isDark ? "#334155" : "#E2E8F0", strokeWidth: 1 },
+                      strokeWidth: 3,
+                      style: { borderRadius: 12 },
+                    }}
+                    bezier
+                    withDots={datosGraficoLongitud.datos.length <= 18}
+                    withShadow={false}
+                    withInnerLines={true}
+                    withOuterLines={false}
+                    withVerticalLines={false}
+                    withHorizontalLines={true}
+                    segments={4}
+                    xLabelsOffset={2}
+                    yLabelsOffset={6}
+                    verticalLabelRotation={datosGraficoLongitud.datos.length > 14 ? 20 : 0}
+                    style={styles.chart}
+                  />
+                </View>
+
+                <Text style={styles.xAxisLabel}>{t("hoyYDiasProyectados") || "Hoy y días proyectados"}</Text>
                 <Text style={styles.chartSubtitle}>{t("punto0EsLaUltimaMedicionConfirmada")}</Text>
               </View>
             )}
 
-            {resultado.curvaCrecimientoPeso?.length > 0 && (
+            {datosGraficoPeso && (
               <View style={styles.chartContainer}>
-                <Text style={styles.chartTitle}>{t("curvaProyectadaPeso")}</Text>
-                <LineChart
-                  data={{
-                    labels: resultado.curvaCrecimientoPeso.length === 1 ? ["Hoy", "Futuro"] : resultado.curvaCrecimientoPeso.map((_, i) => i === 0 ? "Hoy" : `+${i}`),
-                    datasets: [{ 
-                      data: resultado.curvaCrecimientoPeso.length === 1 
-                        ? [resultado.curvaCrecimientoPeso[0], resultado.curvaCrecimientoPeso[0]] 
-                        : resultado.curvaCrecimientoPeso 
-                    }],
-                  }}
-                  width={screenWidth - 80}
-                  height={220}
-                  chartConfig={{
-                    backgroundColor: isDark ? "#1E1E1E" : "#F59E0B",
-                    backgroundGradientFrom: isDark ? "#1E293B" : "#FBBF24",
-                    backgroundGradientTo: isDark ? "#0F172A" : "#D97706",
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    style: { borderRadius: 16 },
-                  }}
-                  bezier
-                  style={styles.chart}
-                />
+                <View style={styles.chartHeaderRow}>
+                  <View style={styles.chartHeaderLeft}>
+                    <Text style={styles.chartTitle}>{t("curvaProyectadaPeso")}</Text>
+                    <Text style={styles.chartRange}>+{resultado.diasPrediccion} {t("dias") || "días"}</Text>
+                  </View>
+                  <View style={styles.chartCurrentValue}>
+                    <Text style={styles.currentValueText}>{resultado.pesoFinal.toFixed(1)} g</Text>
+                  </View>
+                </View>
+
+                <View style={styles.chartWrapper}>
+                  <View style={styles.yAxisLabel}>
+                    <Text style={styles.yAxisText}>g</Text>
+                  </View>
+
+                  <LineChart
+                    data={{
+                      labels: datosGraficoPeso.etiquetas,
+                      datasets: [{ data: datosGraficoPeso.datos }],
+                    }}
+                    width={ANCHO_GRAFICO_FIJO}
+                    height={220}
+                    chartConfig={{
+                      backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+                      backgroundGradientFrom: isDark ? "#1E293B" : "#FFFFFF",
+                      backgroundGradientTo: isDark ? "#1E293B" : "#FFFFFF",
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(245, 158, 11, ${opacity})`,
+                      labelColor: (opacity = 1) =>
+                        isDark ? `rgba(148, 163, 184, ${opacity})` : `rgba(100, 116, 139, ${opacity})`,
+                      propsForDots: { r: "4", strokeWidth: "2", stroke: "#F59E0B" },
+                      propsForBackgroundLines: { stroke: isDark ? "#334155" : "#E2E8F0", strokeWidth: 1 },
+                      strokeWidth: 3,
+                      style: { borderRadius: 12 },
+                    }}
+                    bezier
+                    withDots={datosGraficoPeso.datos.length <= 18}
+                    withShadow={false}
+                    withInnerLines={true}
+                    withOuterLines={false}
+                    withVerticalLines={false}
+                    withHorizontalLines={true}
+                    segments={4}
+                    xLabelsOffset={2}
+                    yLabelsOffset={6}
+                    verticalLabelRotation={datosGraficoPeso.datos.length > 14 ? 20 : 0}
+                    style={styles.chart}
+                  />
+                </View>
+
+                <Text style={styles.xAxisLabel}>{t("hoyYDiasProyectados") || "Hoy y días proyectados"}</Text>
                 <Text style={styles.chartSubtitle}>Proyección de ganancia de biomasa</Text>
               </View>
             )}
@@ -513,26 +633,84 @@ const getStyles = (isDark: boolean) => StyleSheet.create({
   },
   chartContainer: {
     backgroundColor: isDark ? "#1E1E1E" : "white",
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
     marginBottom: 20,
-    elevation: 4,
-    alignItems: 'center',
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: isDark ? "#334155" : "#F1F5F9",
   },
   chartTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: isDark ? "#F1F5F9" : "#1E293B",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  chartRange: {
+    fontSize: 11,
+    color: isDark ? "#9CA3AF" : "#64748B",
+    fontWeight: "500",
+  },
+  chartCurrentValue: {
+    backgroundColor: isDark ? "#0F172A" : "#F8FAFC",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  currentValueText: {
     fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 15,
-    color: isDark ? "#F1F5F9" : "#333",
+    fontWeight: "900",
+    letterSpacing: -0.5,
+    color: isDark ? "#F1F5F9" : "#111827",
+  },
+  chartHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+  chartHeaderLeft: {
+    flex: 1,
+  },
+  chartWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  yAxisLabel: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+    width: 30,
+  },
+  yAxisText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: isDark ? "#9CA3AF" : "#64748B",
+    transform: [{ rotate: "-90deg" }],
+  },
+  xAxisLabel: {
+    fontSize: 10,
+    color: isDark ? "#94A3B8" : "#94A3B8",
+    textAlign: "center",
+    marginTop: 6,
+    fontWeight: "500",
   },
   chart: {
-    borderRadius: 16,
+    borderRadius: 12,
+    marginVertical: 8,
+    backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
   },
   chartSubtitle: {
     fontSize: 12,
     color: isDark ? "#94A3B8" : "#94A3B8",
     textAlign: "center",
-    marginTop: 12,
+    marginTop: 4,
     fontStyle: "italic",
   }
 })

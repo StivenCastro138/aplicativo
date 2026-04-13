@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { truchasService, lechugasService } from "../services/apiService";
 import { LanguageContext } from "../context/LanguageContext";
+import { useAuth } from "../context/authContext";
 
 export interface Alerta {
   id: string;
@@ -75,6 +76,7 @@ export const useAlert = () => {
 export const AlertProvider = ({ children }: { children: ReactNode }) => {
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [alertaActual, setAlertaActual] = useState<Alerta | null>(null);
+  const { isLoggedIn, isLoading } = useAuth();
 
   const ultimaVerificacionRef = useRef<{ [key: string]: number }>({});
   const languageContext = useContext(LanguageContext);
@@ -170,6 +172,10 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const verificarAlertas = useCallback(async () => {
+    if (!isLoggedIn) {
+      return;
+    }
+
     console.log("🔍 Ejecutando verificación de sensores de alertas...");
 
     const resultados = await Promise.allSettled([
@@ -254,7 +260,7 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
       )
         crearAlerta("turbidez", "tanques", tur, T.turbidez);
     }
-  }, [crearAlerta]);
+  }, [crearAlerta, isLoggedIn]);
 
   const marcarComoVista = useCallback((id: string) => {
     setAlertas((prev) =>
@@ -280,16 +286,26 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
   }, [alertas]);
 
   useEffect(() => {
+    if (isLoading || !isLoggedIn) {
+      return;
+    }
+
     verificarAlertas();
     const interval = setInterval(verificarAlertas, 30000);
     return () => clearInterval(interval);
-  }, [verificarAlertas]);
+  }, [verificarAlertas, isLoading, isLoggedIn]);
 
   useEffect(() => {
-    if (alertaActual && alertaActual.severidad !== "critica") {
+    if (!isLoading && !isLoggedIn) {
+      limpiarAlertas();
+    }
+  }, [isLoading, isLoggedIn, limpiarAlertas]);
+
+  useEffect(() => {
+    if (alertaActual) {
       const timer = setTimeout(() => {
         ignorarAlerta(alertaActual.id);
-      }, 10000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [alertaActual, ignorarAlerta]);

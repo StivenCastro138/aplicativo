@@ -1,11 +1,24 @@
 import Constants from "expo-constants"
 
+const LECHUGAS_DOMAIN_ACTIVE = "https://tinsel-canteen-parasitic.ngrok-free.dev"
+const LECHUGAS_DOMAIN_LEGACY = "https://capacitive-delora-entreatingly.ngrok-free.dev"
+
+const getEnvValue = (key: string): string | undefined => {
+  const value = process.env[key]
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined
+}
+
 const getApiBaseUrl = () => {
+  const publicApi = getEnvValue("EXPO_PUBLIC_LECHUGAS_API_URL")
+  if (publicApi) {
+    return publicApi.replace(LECHUGAS_DOMAIN_LEGACY, LECHUGAS_DOMAIN_ACTIVE)
+  }
+
   const isWeb = Constants.executionEnvironment === "storeClient" ? false : true
   if (isWeb && typeof window !== "undefined") {
-    return "http://localhost:5100"
+    return LECHUGAS_DOMAIN_ACTIVE
   } else {
-    return "http://192.168.1.111:5100"
+    return LECHUGAS_DOMAIN_ACTIVE
   }
 }
 
@@ -25,7 +38,8 @@ export const LECHUGAS_ENDPOINTS = {
   diarioUltimo: `${API_BASE_URL}/api/graphics/lechugas/diario-ultimo`,
 }
 
-export const TRUCHAS_API_BASE_URL = "https://keitha-groveless-tari.ngrok-free.dev"
+export const TRUCHAS_API_BASE_URL =
+  getEnvValue("EXPO_PUBLIC_TRUCHAS_API_URL") || "https://keitha-groveless-tari.ngrok-free.dev"
 console.log(`🐟 API Ngrok (Truchas): ${TRUCHAS_API_BASE_URL}`)
 
 export const NEW_API_ENDPOINTS = {

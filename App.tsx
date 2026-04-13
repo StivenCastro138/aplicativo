@@ -60,7 +60,7 @@ function AppContent() {
         </Stack.Navigator>
       </NavigationContainer>
 
-      {alertaActual && (
+      {user && alertaActual && (
         <AlertOverlay 
           alerta={alertaActual} 
           onVerAlerta={handleNavigateToAlerts} 

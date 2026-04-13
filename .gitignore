@@ -28,3 +28,11 @@ next-env.d.ts
 /sonar-project.properties
 
 /.scannerwork
+
+# android native generated artifacts
+/android/build
+/android/app/build
+/android/.cxx
+/android/app/.cxx
+/android/.gradle
+/android/local.properties

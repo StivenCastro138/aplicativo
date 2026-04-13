@@ -29,6 +29,28 @@ export interface LechugaData {
   timestamp?: string
 }
 
+export interface TruchaHistoryRow {
+  dia: number
+  timestamp: string
+  longitudCm: number
+  pesoG: number
+  temperaturaC: number
+  conductividadUsCm: number
+  pH: number
+  oxigenoMgL: number
+  turbidezNtu: number
+}
+
+export interface LechugaHistoryRow {
+  dia: number
+  timestamp: string
+  altura: number
+  areaFoliar: number
+  temperatura: number
+  humedad: number
+  ph: number
+}
+
 const fetchWithErrorHandling = async (url: string) => {
   try {
     console.log(`🔄 Fetching: ${url}`)
@@ -79,6 +101,90 @@ const extractValue = (response: any, fallback = 0): number => {
   return fallback
 }
 
+const asNumber = (value: unknown, fallback = 0): number => {
+  if (typeof value === "number" && Number.isFinite(value)) return value
+  if (typeof value === "string") {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return fallback
+}
+
+const extractArrayPayload = (payload: any): any[] => {
+  if (Array.isArray(payload)) return payload
+  if (payload && Array.isArray(payload.datos)) return payload.datos
+  if (payload && Array.isArray(payload.data)) return payload.data
+  if (payload && payload.success && Array.isArray(payload.data)) return payload.data
+  return []
+}
+
+const normalizeTruchaHistory = (row: any, index: number): TruchaHistoryRow | null => {
+  const timestamp = row.timestamp || row.TIMESTAMP || row.fecha || row.date || row.datetime
+  const longitudCm = asNumber(
+    row.longitudCm ??
+      row.longitud_cm ??
+      row.LENGTH_CM ??
+      row.length_cm ??
+      row.biometria?.longitud_cm ??
+      row.biometria?.longitudCm,
+    0,
+  )
+
+  if (!timestamp || longitudCm <= 0) {
+    return null
+  }
+
+  return {
+    dia: asNumber(row.dia ?? row.day, index + 1),
+    timestamp: String(timestamp),
+    longitudCm,
+    pesoG: asNumber(
+      row.pesoG ??
+        row.peso_g ??
+        row.WEIGHT_G ??
+        row.weight_g ??
+        row.weightG ??
+        row.biometria?.peso_g ??
+        row.biometria?.pesoG,
+      0,
+    ),
+    temperaturaC: asNumber(
+      row.temperaturaC ?? row.temperatura_c ?? row.API_WATER_TEMP_C ?? row.water_temp_c,
+      0,
+    ),
+    conductividadUsCm: asNumber(
+      row.conductividadUsCm ?? row.conductividad_us_cm ?? row.API_COND_US_CM,
+      0,
+    ),
+    pH: asNumber(row.pH ?? row.ph ?? row.API_PH, 0),
+    oxigenoMgL: asNumber(row.oxigenoMgL ?? row.oxigeno_mg_l ?? row.API_DO_MG_L, 0),
+    turbidezNtu: asNumber(row.turbidezNtu ?? row.turbidez_ntu ?? row.API_TURBIDITY_NTU, 0),
+  }
+}
+
+const normalizeLechugaHistory = (row: any, index: number): LechugaHistoryRow | null => {
+  const timestamp = row.timestamp || row.TIMESTAMP || row.fecha || row.date || row.datetime
+  const altura = asNumber(row.altura ?? row.alturaCm ?? row.altura_cm ?? row.height_cm, 0)
+  const areaFoliar = asNumber(
+    row.areaFoliar ?? row.areaFoliarCm2 ?? row.area_foliar ?? row.leaf_area_cm2,
+    0,
+  )
+
+  if (!timestamp || altura <= 0 || areaFoliar <= 0) {
+    return null
+  }
+
+  return {
+    dia: asNumber(row.dia ?? row.day, index + 1),
+    timestamp: String(timestamp),
+    altura,
+    areaFoliar,
+    temperatura: asNumber(row.temperatura ?? row.temperaturaC ?? row.temperatura_c, 0),
+    humedad: asNumber(row.humedad ?? row.humedadPorcentaje ?? row.humedad_porcentaje, 0),
+    ph: asNumber(row.ph ?? row.pH, 0),
+  }
+}
+
 export const truchasService = {
   getLatest: async (): Promise<any> => {
     return await fetchWithErrorHandling(NEW_API_ENDPOINTS.lastReport)
@@ -112,6 +218,36 @@ export const truchasService = {
     } catch (error) {
       console.error("❌ Error in truchasService.getLatestValues:", error)
       throw error
+    }
+  },
+
+  getDailyHistory: async (): Promise<TruchaHistoryRow[]> => {
+    try {
+      const [diarioRes, statsRes] = await Promise.allSettled([
+        fetchWithErrorHandling(TRUCHAS_ENDPOINTS.diarioUltimo),
+        fetchWithErrorHandling(NEW_API_ENDPOINTS.stats),
+      ])
+
+      const combinedRaw = [
+        ...(diarioRes.status === "fulfilled" ? extractArrayPayload(diarioRes.value) : []),
+        ...(statsRes.status === "fulfilled" ? extractArrayPayload(statsRes.value) : []),
+      ]
+
+      const normalized = combinedRaw
+        .map((row, index) => normalizeTruchaHistory(row, index))
+        .filter((row): row is TruchaHistoryRow => row !== null)
+
+      const dedupMap = new Map<string, TruchaHistoryRow>()
+      normalized.forEach((row) => {
+        dedupMap.set(row.timestamp, row)
+      })
+
+      return Array.from(dedupMap.values()).sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+      )
+    } catch (error) {
+      console.error("❌ Error in truchasService.getDailyHistory:", error)
+      return []
     }
   },
 }
@@ -159,6 +295,21 @@ export const lechugasService = {
     } catch (error) {
       console.error("❌ Error in lechugasService.getLatestValues:", error)
       throw error
+    }
+  },
+
+  getDailyHistory: async (): Promise<LechugaHistoryRow[]> => {
+    try {
+      const response = await fetchWithErrorHandling(LECHUGAS_ENDPOINTS.diarioUltimo)
+      const raw = extractArrayPayload(response)
+
+      return raw
+        .map((row, index) => normalizeLechugaHistory(row, index))
+        .filter((row): row is LechugaHistoryRow => row !== null)
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    } catch (error) {
+      console.error("❌ Error in lechugasService.getDailyHistory:", error)
+      return []
     }
   },
 }

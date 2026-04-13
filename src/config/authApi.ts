@@ -8,9 +8,9 @@ const getAuthApiBaseUrl = () => {
   const isWeb = Constants.executionEnvironment === "storeClient" ? false : true
 
   if (isWeb && typeof window !== "undefined") {
-    return "https://capacitive-delora-entreatingly.ngrok-free.dev" // Puerto 7150 para HTTPS local en web
+     return "https://capacitive-delora-entreatingly.ngrok-free.dev" // Dominio ngrok fijo para web
   } else {
-    return "https://capacitive-delora-entreatingly.ngrok-free.dev" // Puerto 7150 para HTTPS local en móvil
+     return "https://capacitive-delora-entreatingly.ngrok-free.dev" // Dominio ngrok fijo para móvil
   }
 }
 

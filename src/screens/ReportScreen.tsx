@@ -7,8 +7,13 @@ import { MaterialIcons } from "@expo/vector-icons"
 import * as FileSystem from "expo-file-system/legacy"
 import * as Sharing from "expo-sharing"
 import * as Print from "expo-print"
-import { truchasService, lechugasService } from "../services/apiService"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
+import {
+  truchasService,
+  lechugasService,
+  type LechugaHistoryRow,
+  type TruchaHistoryRow,
+} from "../services/apiService"
+import { TRUCHAS_CSV_SEED } from "../data/truchasSeedData"
 import { ThemeContext } from "../context/ThemeContext"
 import { LanguageContext } from "../context/LanguageContext"
 import { useNavigation } from "@react-navigation/native"
@@ -24,9 +29,39 @@ interface ReportCardProps {
   styles: any;
 }
 
+type ReportRow = Record<string, string>
+
+const TANQUES_BASE_DATA: TruchaHistoryRow[] = TRUCHAS_CSV_SEED.map((row) => ({
+  dia: row.dia,
+  timestamp: row.timestamp,
+  longitudCm: row.longitudCm,
+  pesoG: row.pesoG,
+  temperaturaC: row.temperaturaC,
+  conductividadUsCm: row.conductividadUsCm,
+  pH: row.pH,
+  oxigenoMgL: row.oxigenoMgL,
+  turbidezNtu: row.turbidezNtu,
+}))
+
+const toDateParts = (timestamp: string) => {
+  const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) {
+    return { fecha: "N/A", hora: "N/A" }
+  }
+
+  return {
+    fecha: date.toLocaleDateString(),
+    hora: date.toLocaleTimeString(),
+  }
+}
+
+const getLast90Days = <T extends { timestamp: string }>(rows: T[]) => {
+  const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000
+  return rows.filter((row) => new Date(row.timestamp).getTime() >= ninetyDaysAgo)
+}
+
 export default function ReportesScreen() { 
   const navigation = useNavigation<any>()
-  const insets = useSafeAreaInsets()
   const [generandoReporte, setGenerandoReporte] = useState(false)
   const themeContext = useContext(ThemeContext);
   const isDark = themeContext?.isDark ?? false;
@@ -48,12 +83,17 @@ export default function ReportesScreen() {
   }
 
   const generarGraficaSVG = (datos: number[], titulo: string, color: string) => {
+    if (datos.length === 0) {
+      return `<div style="margin-top:20px; color:#64748b; text-align:center;">Sin datos para ${titulo}</div>`
+    }
+
     const width = 400; const height = 200; const padding = 40;
     const chartWidth = width - 2 * padding; const chartHeight = height - 2 * padding;
     const maxValue = Math.max(...datos); const minValue = Math.min(...datos);
     const valueRange = maxValue - minValue || 1;
     const points = datos.map((value, index) => {
-      const x = padding + (index / (datos.length - 1)) * chartWidth
+      const ratio = datos.length === 1 ? 0.5 : index / (datos.length - 1)
+      const x = padding + ratio * chartWidth
       const y = padding + chartHeight - ((value - minValue) / valueRange) * chartHeight
       return `${x},${y}`
     }).join(" ")
@@ -63,77 +103,166 @@ export default function ReportesScreen() {
     </svg></div>`
   }
 
+  const construirFilasCultivos = (historico: LechugaHistoryRow[], actual: any): ReportRow[] => {
+    if (historico.length > 0) {
+      return historico.map((d) => {
+        const { fecha, hora } = toDateParts(d.timestamp)
+        return {
+          Fecha: fecha,
+          Hora: hora,
+          "Altura (cm)": d.altura.toFixed(2),
+          "Área Foliar (cm²)": d.areaFoliar.toFixed(2),
+          "Temperatura (°C)": d.temperatura.toFixed(2),
+          "Humedad (%)": d.humedad.toFixed(2),
+          pH: d.ph.toFixed(2),
+        }
+      })
+    }
+
+    const ahora = new Date()
+    return [
+      {
+        Fecha: ahora.toLocaleDateString(),
+        Hora: ahora.toLocaleTimeString(),
+        "Altura (cm)": Number(actual.altura || 0).toFixed(2),
+        "Área Foliar (cm²)": Number(actual.areaFoliar || 0).toFixed(2),
+        "Temperatura (°C)": Number(actual.temperatura || 0).toFixed(2),
+        "Humedad (%)": Number(actual.humedad || 0).toFixed(2),
+        pH: Number(actual.ph || 0).toFixed(2),
+      },
+    ]
+  }
+
+  const construirFilasTanques = (historicoApi: TruchaHistoryRow[], actual: any): ReportRow[] => {
+    const merged = [...TANQUES_BASE_DATA, ...historicoApi]
+    const mapByTimestamp = new Map<string, TruchaHistoryRow>()
+    merged.forEach((item, idx) => {
+      const timestamp = item.timestamp || `fallback-${idx}`
+      const prev = mapByTimestamp.get(timestamp)
+
+      if (!prev) {
+        mapByTimestamp.set(timestamp, { ...item, dia: item.dia || idx + 1 })
+        return
+      }
+
+      mapByTimestamp.set(timestamp, {
+        ...item,
+        dia: item.dia || prev.dia || idx + 1,
+        pesoG: item.pesoG > 0 ? item.pesoG : prev.pesoG,
+      })
+    })
+
+    const rows = Array.from(mapByTimestamp.values()).sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    )
+
+    if (rows.length > 0) {
+      return rows.map((d) => {
+        const { fecha, hora } = toDateParts(d.timestamp)
+        return {
+          Fecha: fecha,
+          Hora: hora,
+          "Longitud (cm)": d.longitudCm.toFixed(2),
+          "Peso (g)": d.pesoG > 0 ? d.pesoG.toFixed(2) : "N/D",
+          "Temperatura (°C)": d.temperaturaC.toFixed(2),
+          "Conductividad (μS/cm)": d.conductividadUsCm.toFixed(2),
+          "Oxígeno (mg/L)": d.oxigenoMgL.toFixed(2),
+          "Turbidez (NTU)": d.turbidezNtu.toFixed(2),
+          pH: d.pH.toFixed(2),
+        }
+      })
+    }
+
+    const ahora = new Date()
+    return [
+      {
+        Fecha: ahora.toLocaleDateString(),
+        Hora: ahora.toLocaleTimeString(),
+        "Longitud (cm)": Number(actual.longitudCm || 0).toFixed(2),
+        "Peso (g)": Number(actual.pesoG || 0).toFixed(2),
+        "Temperatura (°C)": Number(actual.temperaturaC || 0).toFixed(2),
+        "Conductividad (μS/cm)": Number(actual.conductividadUsCm || 0).toFixed(2),
+        "Oxígeno (mg/L)": Number(actual.oxigenoMgL || 0).toFixed(2),
+        "Turbidez (NTU)": Number(actual.turbidezNtu || 0).toFixed(2),
+        pH: Number(actual.pH || 0).toFixed(2),
+      },
+    ]
+  }
+
   const generarReporteMaster = async (modulo: "cultivos" | "tanques", formato: "excel" | "pdf") => {
     setGenerandoReporte(true);
     try {
-      const service = modulo === "cultivos" ? lechugasService : truchasService;
-      const datosActuales: any = await service.getLatestValues();
+      let datosCompletosFormateados: ReportRow[] = []
+      let datosUltimos90Formateados: ReportRow[] = []
 
-      if (!datosActuales) {
-        throw new Error(t("sinResultados") || "No hay datos recientes para generar el reporte.");
+      if (modulo === "cultivos") {
+        const historicoCultivos = await lechugasService.getDailyHistory()
+        const actualCultivos = await lechugasService.getLatestValues()
+        const cultivos90 = getLast90Days(historicoCultivos)
+
+        datosCompletosFormateados = construirFilasCultivos(historicoCultivos, actualCultivos)
+        datosUltimos90Formateados = construirFilasCultivos(cultivos90, actualCultivos)
+      } else {
+        const historicoTanquesApi = await truchasService.getDailyHistory()
+        const historicoTanques = [...TANQUES_BASE_DATA, ...historicoTanquesApi].sort(
+          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+        )
+        const actualTanques = await truchasService.getLatestValues()
+        const tanques90 = getLast90Days(historicoTanques)
+
+        datosCompletosFormateados = construirFilasTanques(historicoTanques, actualTanques)
+        datosUltimos90Formateados = construirFilasTanques(tanques90, actualTanques)
       }
 
-      const datosHistoricos = [];
-      const ahora = new Date();
-
-      for (let i = 89; i >= 0; i--) {
-        const fecha = new Date(ahora.getTime() - i * 24 * 60 * 60 * 1000);
-        const variacion = () => (Math.random() - 0.5) * 0.2;
-        const factor = (90 - i) / 90;
-        
-        const temp = (datosActuales.temperatura * (1 + variacion())).toFixed(1);
-        const phVal = (datosActuales.ph * (1 + variacion() * 0.1)).toFixed(2);
-
-        if (modulo === "cultivos") {
-          const altBase = datosActuales.altura * 0.3;
-          const areaBase = datosActuales.areaFoliar * 0.2;
-          datosHistoricos.push({
-            Fecha: fecha.toLocaleDateString(),
-            Hora: fecha.toLocaleTimeString(),
-            "Altura (cm)": (altBase + (datosActuales.altura - altBase) * factor * (1 + variacion() * 0.1)).toFixed(2),
-            "Área Foliar (cm²)": (areaBase + (datosActuales.areaFoliar - areaBase) * factor * (1 + variacion() * 0.1)).toFixed(2),
-            "Temperatura (°C)": temp,
-            "Humedad (%)": (datosActuales.humedad * (1 + variacion())).toFixed(1),
-            pH: phVal,
-          });
-        } else {
-          const longBase = datosActuales.longitud * 0.4;
-          datosHistoricos.push({
-            Fecha: fecha.toLocaleDateString(),
-            Hora: fecha.toLocaleTimeString(),
-            "Longitud (cm)": (longBase + (datosActuales.longitud - longBase) * factor * (1 + variacion() * 0.1)).toFixed(2),
-            "Temperatura (°C)": temp,
-            "Conductividad (μS/cm)": (datosActuales.conductividad * (1 + variacion())).toFixed(1),
-            pH: phVal,
-          });
-        }
+      if (!datosCompletosFormateados.length) {
+        throw new Error(t("sinResultados") || "No hay datos recientes para generar el reporte.")
       }
 
       const titulo = modulo === "cultivos" ? t("MONITOREO_DE_CULTIVOS") : t("MONITOREO_DE_TANQUES");
-      const headers = Object.keys(datosHistoricos[0]);
+      const headers = Object.keys((formato === "pdf" ? datosUltimos90Formateados : datosCompletosFormateados)[0]);
       let fileUri = "";
 
       if (formato === "excel") {
-        const csv = generarCSV(datosHistoricos, headers, titulo);
-        const modulo = "cultivos"; // Default for types
+        const csv = generarCSV(datosCompletosFormateados, headers, titulo);
         fileUri = `${FileSystem.documentDirectory}FishTrace_${modulo}.csv`;
         await FileSystem.writeAsStringAsync(fileUri, csv);
       } else {
-        const svg1 = generarGraficaSVG(datosHistoricos.map(d => parseFloat(d["Temperatura (°C)"] ?? "0")), "Histórico Temperatura", "#EF4444");
-        const svg2 = generarGraficaSVG(datosHistoricos.map(d => parseFloat((modulo === "cultivos" ? d["Altura (cm)"] : d["Longitud (cm)"]) ?? "0")), "Curva de Crecimiento", "#10B981");
+        const dataForPdf = datosUltimos90Formateados.length
+          ? datosUltimos90Formateados
+          : datosCompletosFormateados.slice(-90)
+
+        const svg1 = generarGraficaSVG(
+          dataForPdf.map((d) => {
+            const row = d as Record<string, string>
+            return parseFloat(row["Temperatura (°C)"] ?? "0")
+          }),
+          "Histórico Temperatura",
+          "#EF4444",
+        );
+
+        const svg2 = generarGraficaSVG(
+          dataForPdf.map((d) => {
+            const row = d as Record<string, string>
+            return parseFloat(
+              (modulo === "cultivos" ? row["Altura (cm)"] : row["Longitud (cm)"]) ?? "0",
+            )
+          }),
+          "Curva de Crecimiento",
+          "#10B981",
+        );
 
         const html = `<html><body style="font-family:Arial;padding:30px;">
           <h1 style="color:#007b3e;text-align:center;">${titulo}</h1>
-          <p style="text-align:center; color:#666;">Universidad de Cundinamarca - FishTrace</p>
+          <p style="text-align:center; color:#666;">Universidad de Cundinamarca - FishTracer</p>
           <hr/>
-          <h3>Análisis de Crecimiento</h3>
+          <h3>Análisis de Crecimiento (Últimos 90 días)</h3>
           <div style="text-align:center;">${svg1}${svg2}</div>
           <h3>Registros Detallados (90 días)</h3>
           <table border="1" style="width:100%; border-collapse:collapse; font-size:10px;">
             <tr style="background:#007b3e; color:white;">${headers.map(h => `<th>${h}</th>`).join("")}</tr>
-            ${datosHistoricos.slice(0, 20).map(d => `<tr>${headers.map(h => `<td>${(d as Record<string, any>)[h]}</td>`).join("")}</tr>`).join("")}
+            ${dataForPdf.map(d => `<tr>${headers.map(h => `<td>${(d as Record<string, any>)[h]}</td>`).join("")}</tr>`).join("")}
           </table>
-          <p>... historial truncado para el reporte PDF (Ver Excel para log completo) ...</p>
+          <p>CSV: historial completo disponible.</p>
         </body></html>`;
 
         const { uri } = await Print.printToFileAsync({ html });

@@ -1,0 +1,29 @@
+# Keep EAS archive lean and platform-agnostic
+.git
+.gitignore
+
+# JS dependencies/cache
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Expo/Next artifacts
+.expo
+.next
+out
+build
+
+# Android generated artifacts (can contain absolute local paths)
+android/build
+android/app/build
+android/.cxx
+android/app/.cxx
+android/.gradle
+android/local.properties
+
+# Misc
+.scannerwork
+sonar-project.properties
+*.tsbuildinfo

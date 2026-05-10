@@ -1,10 +1,7 @@
 import { LECHUGAS_ENDPOINTS } from "../config/api"
-import { truchasService, lechugasService } from "./apiService" // Importamos los servicios para usar datos en línea
+import { truchasService } from "./apiService" // Importamos el servicio de truchas para usar datos en línea
 
-// 🚧 URL temporal para no romper el historial de truchas mientras se programa en Python
-const LEGACY_API_URL = "http://192.168.1.111:5100";
-const LEGACY_TRUCHAS_RANGE = `${LEGACY_API_URL}/api/truchas/range`;
-const LEGACY_TRUCHAS_DIARIO = `${LEGACY_API_URL}/api/graphics/truchas/diario-ultimo`;
+// Histórico de truchas servido por el servicio compartido con fallback local
 
 // Datos de referencia para calibración del modelo de truchas
 const DATOS_REFERENCIA_TRUCHAS = [
@@ -351,14 +348,26 @@ const modeloExponencialArea = (tiempo: number, coeficientes: number[], datos: an
 export const prediccionTruchasService = {
   obtenerDatosHistoricos: async () => {
     try {
-      // 🚧 Usa el fallback antiguo para no romperse
-      const datosLongitud = await obtenerDatosPorDias(LEGACY_TRUCHAS_RANGE, 30)
-      if (datosLongitud.valores.length < 5) throw new Error("No hay suficientes días con datos de longitud")
+      const datosHistoricos = await truchasService.getDailyHistory()
+      const datosLongitud = datosHistoricos
+        .map((registro, index) => ({
+          tiempo: validarNumero(registro.dia || index + 1, index + 1),
+          valorObservado: validarNumero(registro.longitudCm, 0),
+          temperatura: validarNumero(registro.temperaturaC, 15),
+          conductividad: validarNumero(registro.conductividadUsCm, 550),
+          ph: validarNumero(registro.pH, 7.5),
+          oxigeno: validarNumero(registro.oxigenoMgL, 2.2),
+          humedad: 65,
+          timestamp: registro.timestamp,
+        }))
+        .filter((dato) => dato.valorObservado > 0)
+
+      if (datosLongitud.length < 5) throw new Error("No hay suficientes días con datos de longitud")
 
       return {
-        tiempos: datosLongitud.dias,
-        longitudes: datosLongitud.valores,
-        totalRegistros: datosLongitud.totalDias,
+        tiempos: datosLongitud.map((dato) => dato.tiempo),
+        longitudes: datosLongitud.map((dato) => dato.valorObservado),
+        totalRegistros: datosLongitud.length,
       }
     } catch (error) {
       throw new Error(`No se pudieron obtener los datos históricos de truchas`)
@@ -495,28 +504,24 @@ export const prediccionLechugasService = {
 export const prediccionAvanzadaTruchasService = {
   obtenerDatosHistoricos: async () => {
     try {
-      // 🚧 Usa el fallback antiguo
-      const response = await fetchWithTimeout(LEGACY_TRUCHAS_DIARIO)
-      if (!response.datos || !Array.isArray(response.datos)) throw new Error("Formato de respuesta inválido")
-
-      const datosHistoricos = response.datos
+      const datosHistoricos = await truchasService.getDailyHistory()
       if (datosHistoricos.length < 10) throw new Error(`No hay suficientes días con datos`)
 
       const datosParaModelo = datosHistoricos
         .map((registro: any) => ({
-          tiempo: registro.tiempoDias || registro.dia || 0,
+          tiempo: registro.dia || 0,
           valorObservado: Number(registro.longitudCm) || 0,
-          temperatura: Number(registro.temperaturaC) || 15.0,
+          temperatura: Number(registro.temperaturaC) || 15,
           conductividad: Number(registro.conductividadUsCm) || 550,
           ph: Number(registro.pH) || 7.5,
-          oxigeno: 8.0,
+          oxigeno: Number(registro.oxigenoMgL) || 2.2,
           timestamp: registro.timestamp,
           dia: registro.dia,
         }))
         .filter((d: { valorObservado: number }) => d.valorObservado > 0 && d.valorObservado < 100)
         .sort((a: { tiempo: number }, b: { tiempo: number }) => a.tiempo - b.tiempo)
 
-      return { datos: datosParaModelo, metadata: response.metadata }
+      return { datos: datosParaModelo, metadata: null }
     } catch (error) {
       throw new Error(`No se pudieron obtener los datos históricos de truchas`)
     }

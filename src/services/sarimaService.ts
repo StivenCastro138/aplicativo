@@ -1,4 +1,5 @@
 import { TRUCHAS_ENDPOINTS, LECHUGAS_ENDPOINTS } from "../config/api"
+import { truchasService } from "./apiService"
 
 // Función para hacer fetch con timeout
 const fetchWithTimeout = async (url: string, timeout = 15000) => {
@@ -352,13 +353,7 @@ export const sarimaTruchasService = {
   obtenerDatosHistoricos: async () => {
     try {
       console.log("🐟 SARIMA: Obteniendo TODOS los datos históricos diarios de truchas...")
-      const response = await fetchWithTimeout(TRUCHAS_ENDPOINTS.diarioUltimo)
-
-      if (!response.datos || !Array.isArray(response.datos)) {
-        throw new Error("Formato de respuesta inválido")
-      }
-
-      const datosHistoricos = response.datos
+      const datosHistoricos = await truchasService.getDailyHistory()
 
       if (datosHistoricos.length < 14) {
         throw new Error(`Se necesitan al menos 14 días de datos para SARIMA (${datosHistoricos.length} disponibles)`)
@@ -405,7 +400,7 @@ export const sarimaTruchasService = {
 
       return {
         datos: datosParaModelo,
-        metadata: response.metadata,
+        metadata: null,
         longitudActual: ultimoDato.longitud,
         diaActual: ultimoDato.dia,
       }

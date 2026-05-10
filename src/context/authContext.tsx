@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { AppState, AppStateStatus } from "react-native"
 import type { Usuario, ListaActividades } from "../config/authApi"
 
 interface AuthContextType {
@@ -51,6 +52,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     loadStoredAuth()
+  }, [])
+
+  // Limpiar sesión cuando la app va a background o se cierra
+  useEffect(() => {
+    const handleAppStateChange = async (state: AppStateStatus) => {
+      if (state === 'background' || state === 'inactive') {
+        console.log("📱 App en background/inactive - limpiando sesión")
+        await AsyncStorage.multiRemove(["user", "userActivities"])
+        setUser(null)
+        setUserActivities([])
+      }
+    }
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange)
+
+    return () => {
+      subscription.remove()
+    }
   }, [])
 
   const login = useCallback(async (newUser: Usuario, activities: ListaActividades[]) => {

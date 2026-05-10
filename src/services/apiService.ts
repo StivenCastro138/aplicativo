@@ -1,4 +1,5 @@
-import { TRUCHAS_ENDPOINTS, LECHUGAS_ENDPOINTS, NEW_API_ENDPOINTS } from "../config/api"
+import { LECHUGAS_ENDPOINTS, NEW_API_ENDPOINTS } from "../config/api"
+import { TRUCHAS_CSV_SEED } from "../data/truchasSeedData"
 
 export interface TruchaData {
   id?: number
@@ -223,14 +224,12 @@ export const truchasService = {
 
   getDailyHistory: async (): Promise<TruchaHistoryRow[]> => {
     try {
-      const [diarioRes, statsRes] = await Promise.allSettled([
-        fetchWithErrorHandling(TRUCHAS_ENDPOINTS.diarioUltimo),
+      const statsRes = await Promise.allSettled([
         fetchWithErrorHandling(NEW_API_ENDPOINTS.stats),
       ])
 
       const combinedRaw = [
-        ...(diarioRes.status === "fulfilled" ? extractArrayPayload(diarioRes.value) : []),
-        ...(statsRes.status === "fulfilled" ? extractArrayPayload(statsRes.value) : []),
+        ...(statsRes[0].status === "fulfilled" ? extractArrayPayload(statsRes[0].value) : []),
       ]
 
       const normalized = combinedRaw
@@ -242,12 +241,38 @@ export const truchasService = {
         dedupMap.set(row.timestamp, row)
       })
 
-      return Array.from(dedupMap.values()).sort(
+      const remoteHistory = Array.from(dedupMap.values()).sort(
         (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       )
+
+      if (remoteHistory.length > 0) {
+        return remoteHistory
+      }
+
+      return TRUCHAS_CSV_SEED.map((row) => ({
+        dia: row.dia,
+        timestamp: row.timestamp,
+        longitudCm: row.longitudCm,
+        pesoG: row.pesoG,
+        temperaturaC: row.temperaturaC,
+        conductividadUsCm: row.conductividadUsCm,
+        pH: row.pH,
+        oxigenoMgL: row.oxigenoMgL,
+        turbidezNtu: row.turbidezNtu,
+      }))
     } catch (error) {
       console.error("❌ Error in truchasService.getDailyHistory:", error)
-      return []
+      return TRUCHAS_CSV_SEED.map((row) => ({
+        dia: row.dia,
+        timestamp: row.timestamp,
+        longitudCm: row.longitudCm,
+        pesoG: row.pesoG,
+        temperaturaC: row.temperaturaC,
+        conductividadUsCm: row.conductividadUsCm,
+        pH: row.pH,
+        oxigenoMgL: row.oxigenoMgL,
+        turbidezNtu: row.turbidezNtu,
+      }))
     }
   },
 }

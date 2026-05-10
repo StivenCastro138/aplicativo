@@ -125,7 +125,7 @@ export default function PredictTankMLScreen({ navigation }: PrediccionMLScreenPr
   const [progreso, setProgreso] = useState("")
   
   const [datosActuales, setDatosActuales] = useState<DatosActualesML | null>(null)
-  const [diasPrediccion, setDiasPrediccion] = useState("") 
+  const [diasPrediccion, setDiasPrediccion] = useState("30") 
   const [resultado, setResultado] = useState<ResultadoML | null>(null)
 
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function PredictTankMLScreen({ navigation }: PrediccionMLScreenPr
     if (dias > limiteDiasPrediccion) {
       Alert.alert(
         t("limiteBiológico"), 
-        `${t("edadEstimada")} ${datosActuales.edadEstimadaDias} ${t("ciclo")} ${CICLO_VIDA_MAXIMO_DIAS} ${t("días. Solo puedes predecir hasta")} ${limiteDiasPrediccion} ${t("días a futuro.")}`
+        `${t("edadEstimada")} ${datosActuales.edadEstimadaDias} ${t("ciclo")} ${CICLO_VIDA_MAXIMO_DIAS} ${t("soloPuedesPredecirHasta")} ${limiteDiasPrediccion} ${t("diasAFuturo")}`
       )
       return
     }

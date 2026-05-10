@@ -10,8 +10,6 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  Platform,
-  BackHandler,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "../context/authContext";
@@ -191,8 +189,13 @@ function CustomDrawerContent(props: any) {
         text: t("cerrarSesion"),
         style: "destructive",
         onPress: async () => {
-          await logout();
-          if (Platform.OS === "android") BackHandler.exitApp();
+                try {
+                  props.navigation.closeDrawer?.()
+                } catch (e) {
+                  // noop
+                }
+                await logout();
+                props.navigation.getParent?.()?.reset?.({ index: 0, routes: [{ name: "Login" }] })
         },
       },
     ]);

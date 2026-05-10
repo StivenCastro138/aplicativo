@@ -48,6 +48,18 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
     setLoading(true);
 
     try {
+      // Validar conexión a internet antes de intentar login
+      const hasConnection = await authService.checkInternetConnection();
+      
+      if (!hasConnection) {
+        Alert.alert(
+          t("error"),
+          "No hay conexión a internet. Por favor, verifica tu conexión y vuelve a intentar."
+        );
+        setLoading(false);
+        return;
+      }
+
       const { usuario, actividades } = await authService.login(email, password);
       await login(usuario, actividades);
 

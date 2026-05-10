@@ -335,4 +335,58 @@ export const authService = {
       }
     }
   },
+
+  // Función para validar conectividad a internet
+  checkInternetConnection: async (): Promise<boolean> => {
+    try {
+      console.log(`🔌 Validando conexión a internet...`)
+      
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // Timeout de 10 segundos
+
+      try {
+        // Intentar conectar a la API local primero (la que usamos para login)
+        const response = await fetch(AUTH_ENDPOINTS.usuarios, {
+          method: "GET",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" }
+        })
+
+        clearTimeout(timeoutId)
+        
+        // Si recibimos respuesta (incluso 401/403), hay conexión
+        console.log(`✅ Conexión disponible (status: ${response.status})`)
+        return true
+      } catch (apiError: any) {
+        // Si falla la API, intentar con Google DNS como fallback
+        console.log(`⚠️ API no responde, intentando fallback...`)
+        
+        const fallbackController = new AbortController()
+        const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 8000)
+
+        try {
+          const fallbackResponse = await fetch("https://www.google.com/generate_204", {
+            method: "GET",
+            signal: fallbackController.signal
+          })
+          
+          fallbackTimeoutId && clearTimeout(fallbackTimeoutId)
+          
+          if (fallbackResponse.ok || fallbackResponse.status === 204) {
+            console.log(`✅ Conexión disponible (fallback Google OK)`)
+            return true
+          }
+        } catch (fallbackError) {
+          fallbackTimeoutId && clearTimeout(fallbackTimeoutId)
+          console.log(`❌ Fallback también falló`)
+        }
+        
+        return false
+      }
+    } catch (error: any) {
+      console.error(`❌ Error validando conexión:`, error.message)
+      console.log(`🚫 Sin conexión a internet`)
+      return false
+    }
+  },
 }
